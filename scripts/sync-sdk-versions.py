@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Fetches available Android SDK cmdline-tools versions from Google's repository
-and creates/updates sdk-* folders and the CI workflow matrix accordingly.
+and creates/updates sdk-* folders, the CI workflow matrix, and documentation.
 """
 
 import json
@@ -15,6 +15,8 @@ import urllib.request
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 REPO_XML_URL = "https://dl.google.com/android/repository/repository2-3.xml"
 WORKFLOW_PATH = os.path.join(REPO_ROOT, ".github", "workflows", "build.yml")
+README_PATH = os.path.join(REPO_ROOT, "README.md")
+CLAUDE_MD_PATH = os.path.join(REPO_ROOT, "CLAUDE.md")
 
 # Template files come from the newest existing sdk-* folder
 TEMPLATE_FILES = [
@@ -26,6 +28,7 @@ TEMPLATE_FILES = [
 ]
 
 # AGP / Gradle / Java / compileSdk mapping based on cmdline-tools major version
+# Source: https://developer.android.com/build/releases/gradle-plugin
 def get_build_config(major_version):
     if major_version <= 6:
         return {"agp": "7.2.2", "gradle": "7.5.1", "java": "11", "compile_sdk": "32"}
@@ -251,6 +254,91 @@ jobs:
     print(f"Updated {WORKFLOW_PATH} with {len(matrix_entries)} SDK versions")
 
 
+def generate_sdk_table(versions):
+    """Generate the per-folder SDK table for README.md."""
+    existing = sorted(get_existing_sdk_dirs())
+    lines = [
+        "| Folder | cmdline-tools | AGP | Gradle | Java |",
+        "|--------|--------------|-----|--------|------|",
+    ]
+    for major in existing:
+        if major in versions:
+            ver = versions[major]["version"]
+            build = versions[major]["build"]
+            config = get_build_config(major)
+            lines.append(
+                f"| sdk-{major} | {ver} ({build}) | {config['agp']} | {config['gradle']} | {config['java']} |"
+            )
+    return "\n".join(lines)
+
+
+def generate_version_map():
+    """Generate the version mapping table for CLAUDE.md."""
+    # Collect unique configs in order
+    configs = []
+    seen = set()
+    for major in range(1, 100):
+        config = get_build_config(major)
+        key = (config["agp"], config["gradle"], config["java"], config["compile_sdk"])
+        if key not in seen:
+            seen.add(key)
+            configs.append((major, config))
+        # Stop after we've seen the "default" catch-all config twice
+        if len(configs) > 1 and major > 50:
+            break
+
+    lines = [
+        "| cmdline-tools | AGP | Gradle | Java | compileSdk |",
+        "|---------------|-----|--------|------|------------|",
+    ]
+
+    for i, (start_major, config) in enumerate(configs):
+        if i + 1 < len(configs):
+            end_major = configs[i + 1][0] - 1
+            label = f"{start_major}\u2013{end_major}" if start_major != end_major else str(start_major)
+        else:
+            label = f"{start_major}+"
+        lines.append(
+            f"| {label} | {config['agp']} | {config['gradle']} | {config['java']} | {config['compile_sdk']} |"
+        )
+
+    return "\n".join(lines)
+
+
+def update_doc(file_path, begin_marker, end_marker, content):
+    """Replace content between markers in a file."""
+    if not os.path.exists(file_path):
+        return
+
+    with open(file_path, "r") as f:
+        text = f.read()
+
+    pattern = re.compile(
+        rf"({re.escape(begin_marker)}\n).*?({re.escape(end_marker)})",
+        re.DOTALL,
+    )
+
+    if not pattern.search(text):
+        print(f"Warning: markers not found in {file_path}")
+        return
+
+    new_text = pattern.sub(rf"\g<1>{content}\n\g<2>", text)
+
+    with open(file_path, "w") as f:
+        f.write(new_text)
+
+    print(f"Updated {file_path}")
+
+
+def update_docs(versions):
+    """Update README.md and CLAUDE.md with current version tables."""
+    sdk_table = generate_sdk_table(versions)
+    version_map = generate_version_map()
+
+    update_doc(README_PATH, "<!-- BEGIN SDK TABLE -->", "<!-- END SDK TABLE -->", sdk_table)
+    update_doc(CLAUDE_MD_PATH, "<!-- BEGIN VERSION MAP -->", "<!-- END VERSION MAP -->", version_map)
+
+
 def main():
     versions = fetch_versions()
     print(f"Found {len(versions)} stable cmdline-tools versions: {sorted(versions.keys())}")
@@ -267,8 +355,9 @@ def main():
         for major in sorted(new_versions.keys()):
             create_sdk_folder(major, new_versions[major]["build"])
 
-    # Always regenerate workflow to keep it in sync
+    # Always regenerate workflow and docs to keep them in sync
     update_workflow(versions)
+    update_docs(versions)
 
     if new_versions:
         # Output for GitHub Actions
