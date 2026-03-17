@@ -1,4 +1,4 @@
-name: Build
+name: CI
 
 on:
   push:
@@ -27,7 +27,7 @@ jobs:
           distribution: 'temurin'
 
       - name: Setup Android SDK
-        uses: premex-ab/setup-android@v3
+        uses: premex-ab/setup-android@main
 
       - name: Build
         if: runner.os != 'windows'
