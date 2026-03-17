@@ -17,6 +17,12 @@ jobs:
           - windows-latest
           - macos-latest
         sdk:
+          - { dir: sdk-1, build: '6200805', java: 11 }
+          - { dir: sdk-2, build: '6609375', java: 11 }
+          - { dir: sdk-3, build: '6858069', java: 11 }
+          - { dir: sdk-4, build: '7302050', java: 11 }
+          - { dir: sdk-5, build: '7583922', java: 11 }
+          - { dir: sdk-6, build: '8092744', java: 11 }
           - { dir: sdk-7, build: '8512546', java: 11 }
           - { dir: sdk-8, build: '9123335', java: 11 }
           - { dir: sdk-9, build: '9477386', java: 11 }

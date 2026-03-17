@@ -27,7 +27,9 @@ TEMPLATE_FILES = [
 
 # AGP / Gradle / Java / compileSdk mapping based on cmdline-tools major version
 def get_build_config(major_version):
-    if major_version <= 9:
+    if major_version <= 6:
+        return {"agp": "7.2.2", "gradle": "7.5.1", "java": "11", "compile_sdk": "32"}
+    elif major_version <= 9:
         return {"agp": "7.4.2", "gradle": "7.6.4", "java": "11", "compile_sdk": "33"}
     elif major_version <= 11:
         return {"agp": "8.1.4", "gradle": "8.4", "java": "17", "compile_sdk": "34"}
@@ -256,8 +258,7 @@ def main():
     existing = get_existing_sdk_dirs()
     print(f"Existing sdk-* folders: {sorted(existing)}")
 
-    # Only add versions >= 7 (older ones are too ancient)
-    new_versions = {k: v for k, v in versions.items() if k >= 7 and k not in existing}
+    new_versions = {k: v for k, v in versions.items() if k not in existing}
 
     if not new_versions:
         print("No new versions to add")
