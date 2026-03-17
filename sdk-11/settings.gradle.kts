@@ -14,5 +14,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "sample-application"
+rootProject.name = "sample-sdk-11"
 include(":app")
