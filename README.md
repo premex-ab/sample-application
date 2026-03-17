@@ -6,6 +6,7 @@ Minimal Android application used to integration-test [premex-ab/setup-android](h
 
 Each `sdk-*` folder is a standalone Android Gradle project targeting a specific [cmdline-tools](https://developer.android.com/tools) version:
 
+<!-- BEGIN SDK TABLE -->
 | Folder | cmdline-tools | AGP | Gradle | Java |
 |--------|--------------|-----|--------|------|
 | sdk-1 | 1.0 (6200805) | 7.2.2 | 7.5.1 | 11 |
@@ -25,6 +26,7 @@ Each `sdk-*` folder is a standalone Android Gradle project targeting a specific 
 | sdk-17 | 17.0 (12700392) | 8.7.3 | 8.12 | 17 |
 | sdk-19 | 19.0 (13114758) | 8.7.3 | 8.12 | 17 |
 | sdk-20 | 20.0 (14742923) | 8.7.3 | 8.12 | 17 |
+<!-- END SDK TABLE -->
 
 ## CI
 
