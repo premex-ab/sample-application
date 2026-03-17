@@ -16,6 +16,16 @@ jobs:
           - ubuntu-latest
           - windows-latest
           - macos-latest
+        sdk:
+          - { version: 7, build: '8512546' }
+          - { version: 8, build: '9123335' }
+          - { version: 9, build: '9477386' }
+          - { version: 10, build: '9862592' }
+          - { version: 11, build: '10406996' }
+          - { version: 12, build: '11076708' }
+          - { version: 13, build: '11479570' }
+          - { version: 16, build: '12266719' }
+    name: build (${{ matrix.os }}, sdk-${{ matrix.sdk.version }})
 
     steps:
       - uses: actions/checkout@v4
@@ -26,8 +36,10 @@ jobs:
           java-version: 17
           distribution: 'temurin'
 
-      - name: Setup Android SDK
+      - name: Setup Android SDK (v${{ matrix.sdk.version }})
         uses: premex-ab/setup-android@main
+        with:
+          cmdline-tools-version: ${{ matrix.sdk.build }}
 
       - name: Build
         if: runner.os != 'windows'
