@@ -25,6 +25,9 @@ jobs:
           - { dir: sdk-12, build: '11076708', java: 17 }
           - { dir: sdk-13, build: '11479570', java: 17 }
           - { dir: sdk-16, build: '12266719', java: 17 }
+          - { dir: sdk-17, build: '12700392', java: 17 }
+          - { dir: sdk-19, build: '13114758', java: 17 }
+          - { dir: sdk-20, build: '14742923', java: 17 }
     name: ${{ matrix.sdk.dir }} / ${{ matrix.os }}
 
     steps:
