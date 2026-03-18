@@ -1,3 +1,4 @@
+<!-- Tested by Claude Dispatch -->
 # Sample Application
 
 Minimal Android application used to integration-test [premex-ab/setup-android](https://github.com/premex-ab/setup-android).
