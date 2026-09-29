@@ -3,67 +3,67 @@ name: CI
 on:
   push:
     branches: [main]
-    tags: ['*']
   pull_request:
     branches: [main]
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
-    runs-on: ${{ matrix.os }}
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 20
     strategy:
+      fail-fast: false
       matrix:
-        os:
-          - ubuntu-latest
-          - windows-latest
-          - macos-latest
-        sdk:
-          - { dir: sdk-1, build: '6200805', java: 11 }
-          - { dir: sdk-2, build: '6609375', java: 11 }
-          - { dir: sdk-3, build: '6858069', java: 11 }
-          - { dir: sdk-4, build: '7302050', java: 11 }
-          - { dir: sdk-5, build: '7583922', java: 11 }
-          - { dir: sdk-6, build: '8092744', java: 11 }
-          - { dir: sdk-7, build: '8512546', java: 11 }
-          - { dir: sdk-8, build: '9123335', java: 11 }
-          - { dir: sdk-9, build: '9477386', java: 11 }
-          - { dir: sdk-10, build: '9862592', java: 17 }
-          - { dir: sdk-11, build: '10406996', java: 17 }
-          - { dir: sdk-12, build: '11076708', java: 17 }
-          - { dir: sdk-13, build: '11479570', java: 17 }
-          - { dir: sdk-16, build: '12266719', java: 17 }
-          - { dir: sdk-17, build: '12700392', java: 17 }
-          - { dir: sdk-19, build: '13114758', java: 17 }
-          - { dir: sdk-20, build: '14742923', java: 17 }
-    name: ${{ matrix.sdk.dir }} / ${{ matrix.os }}
+        include:
+          - platform: macOS
+            runner: [tart]
+          - platform: Linux
+            runner: [self-hosted, linux, x64]
+          - platform: Windows
+            runner: [self-hosted, windows, x64]
+    name: Android CLI / ${{ matrix.platform }}
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up JDK ${{ matrix.sdk.java }}
+      - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
-          java-version: ${{ matrix.sdk.java }}
-          distribution: 'temurin'
+          java-version: 17
+          distribution: temurin
 
       - name: Setup Android SDK
-        uses: premex-ab/setup-android@main
+        uses: premex-ab/setup-android-cli@35c853708c8a6981651bb0060a17e01fac0143b1 # v1.1.0
         with:
-          cmdline-tools-version: ${{ matrix.sdk.build }}
+          packages: |
+            platform-tools
+            platforms/android-35
+            build-tools/34.0.0
+
+      - uses: gradle/actions/setup-gradle@v4
 
       - name: Build
-        if: runner.os != 'windows'
-        working-directory: ${{ matrix.sdk.dir }}
+        if: runner.os != 'Windows'
+        working-directory: sdk-20
         run: ./gradlew --no-daemon assembleDebug
 
       - name: Build (Windows)
-        if: runner.os == 'windows'
-        working-directory: ${{ matrix.sdk.dir }}
+        shell: pwsh
+        if: runner.os == 'Windows'
+        working-directory: sdk-20
         run: .\gradlew.bat --no-daemon assembleDebug
 
   CI:
     needs: build
     if: always()
-    runs-on: ubuntu-latest
+    runs-on: tart
     steps:
       - run: |
           if [[ "${{ needs.build.result }}" != "success" ]]; then

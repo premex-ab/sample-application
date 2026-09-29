@@ -1,10 +1,12 @@
 # Sample Application
 
-Minimal Android application used to integration-test [premex-ab/setup-android](https://github.com/premex-ab/setup-android).
+Minimal Android application used to integration-test [premex-ab/setup-android-cli](https://github.com/premex-ab/setup-android-cli).
+
+The active integration fixture is `sdk-20` (API 35, AGP 8.7.3, Java 17). CI installs the required SDK packages with the published v1.1.0 action, pinned to its commit SHA.
 
 ## Structure
 
-Each `sdk-*` folder is a standalone Android Gradle project targeting a specific [cmdline-tools](https://developer.android.com/tools) version:
+The other `sdk-*` folders are historical fixtures from the archived `setup-android` action. They are retained for reference; CI no longer tests every legacy command-line tools version:
 
 <!-- BEGIN SDK TABLE -->
 | Folder | cmdline-tools | AGP | Gradle | Java |
@@ -30,8 +32,12 @@ Each `sdk-*` folder is a standalone Android Gradle project targeting a specific 
 
 ## CI
 
-Every push to `main` builds all SDK versions on Ubuntu, Windows, and macOS using `premex-ab/setup-android`.
+Pull requests from this repository and pushes to `main` build `sdk-20` on our own runners:
 
-## Auto-sync
+- macOS: Tart (`tart`)
+- Linux: baremetal (`self-hosted`, `linux`, `x64`)
+- Windows: baremetal (`self-hosted`, `windows`, `x64`)
 
-A weekly workflow (`sync-sdk-versions.yml`) fetches the available cmdline-tools versions from Google's [SDK repository](https://dl.google.com/android/repository/repository2-3.xml). If new versions are found, it creates the corresponding `sdk-*` folder and opens a PR.
+Fork pull requests do not execute repository code on these runners. The required CI gate fails when builds are skipped.
+
+The former weekly command-line tools matrix generator has been retired. `scripts/sync-sdk-versions.py` remains as a historical utility and is not run by CI.
